@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Personal Tasks</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="panel auth" id="authSection">
+        <div class="panel__header">
+          <p class="eyebrow">Welcome back</p>
+          <h1>Focus on your day</h1>
+          <p class="lede">Create an account or log in to keep a personal list of tasks.</p>
+        </div>
+
+        <div class="auth-tabs" role="tablist">
+          <button type="button" class="auth-tab active" data-mode="login">Log in</button>
+          <button type="button" class="auth-tab" data-mode="register">Register</button>
+        </div>
+
+        <form id="loginForm" class="auth-form" data-mode="login">
+          <label class="field">
+            <span>Email</span>
+            <input type="email" id="loginEmail" placeholder="you@example.com" required />
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input type="password" id="loginPassword" placeholder="••••••" required />
+          </label>
+          <button type="submit" class="primary">Access tasks</button>
+        </form>
+
+        <form id="registerForm" class="auth-form hidden" data-mode="register">
+          <label class="field">
+            <span>Name</span>
+            <input type="text" id="registerName" placeholder="Your name" required />
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input type="email" id="registerEmail" placeholder="you@example.com" required />
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input type="password" id="registerPassword" placeholder="Minimum 6 characters" required />
+          </label>
+          <button type="submit" class="primary">Create account</button>
+        </form>
+      </section>
+
+      <section class="panel app" id="appSection" hidden>
+        <div class="app__header">
+          <div>
+            <p class="eyebrow" id="welcomeLabel">Logged in</p>
+            <h2 id="appTitle">Your tasks</h2>
+          </div>
+          <button type="button" id="logoutButton" class="ghost-button">Log out</button>
+        </div>
+
+        <form id="taskForm" class="task-form">
+          <input type="text" id="taskInput" placeholder="What needs to get done?" autocomplete="off" />
+          <button type="submit" class="primary">Add task</button>
+        </form>
+
+        <ul id="taskList" class="task-list" aria-live="polite"></ul>
+      </section>
+    </main>
+
+    <template id="taskTemplate">
+      <li class="task-row">
+        <label class="task-main">
+          <input type="checkbox" />
+          <span class="task-title"></span>
+        </label>
+        <div class="task-actions">
+          <button type="button" class="action edit">Edit</button>
+          <button type="button" class="action danger">Delete</button>
+        </div>
+      </li>
+    </template>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

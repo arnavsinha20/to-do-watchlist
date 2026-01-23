@@ -1,0 +1,29 @@
+{
+  "name": "crud-app-backend",
+  "version": "1.0.0",
+  "description": "REST API for managing users with SQLite",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "init-db": "node src/init-db.js"
+  },
+  "keywords": [
+    "crud",
+    "express",
+    "sqlite",
+    "users"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
