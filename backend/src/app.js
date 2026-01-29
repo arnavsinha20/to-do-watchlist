@@ -102,7 +102,18 @@ app.post('/api/auth/register', async (req, res) => {
     const created = await query(
       'INSERT INTO users (name, email, password_hash, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id, name, email',
       [name, email, passwordHash]
-    );
+    ).catch(async (err) => {
+      // Fallback for MySQL which doesn't support RETURNING
+      if (err && err.code === 'ER_PARSE_ERROR') {
+        await query(
+          'INSERT INTO users (name, email, password_hash, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())',
+          [name, email, passwordHash]
+        );
+        const fetched = await query('SELECT id, name, email FROM users WHERE email = $1', [email]);
+        return { rows: [fetched.rows[0]] };
+      }
+      throw err;
+    });
 
     res.status(201).json({ user: sanitizeUser(created.rows[0]) });
   } catch (error) {
@@ -162,7 +173,20 @@ app.post('/api/users/:userId/tasks', async (req, res) => {
     const created = await query(
       'INSERT INTO tasks (user_id, title, completed, created_at, updated_at) VALUES ($1, $2, FALSE, NOW(), NOW()) RETURNING id, user_id, title, completed, created_at, updated_at',
       [user.id, title]
-    );
+    ).catch(async (err) => {
+      if (err && err.code === 'ER_PARSE_ERROR') {
+        await query(
+          'INSERT INTO tasks (user_id, title, completed, created_at, updated_at) VALUES ($1, $2, FALSE, NOW(), NOW())',
+          [user.id, title]
+        );
+        const fetched = await query(
+          'SELECT id, user_id, title, completed, created_at, updated_at FROM tasks WHERE user_id = $1 ORDER BY id DESC LIMIT 1',
+          [user.id]
+        );
+        return { rows: [fetched.rows[0]] };
+      }
+      throw err;
+    });
     res.status(201).json(mapTask(created.rows[0]));
   } catch (error) {
     handleError(res, error, 'Failed to create task');

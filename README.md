@@ -1,6 +1,6 @@
 # CRUD App
 
-Personal task manager with email/password accounts. The backend is a Node.js + Express API backed by SQLite, and the frontend is a lightweight dashboard written with vanilla HTML, CSS, and JavaScript.
+Personal task manager with email/password accounts. The backend is a Node.js + Express API that can run on MySQL in production (Vercel) and falls back to SQLite locally. The frontend is a lightweight dashboard written with vanilla HTML, CSS, and JavaScript.
 
 ## Project layout
 
@@ -22,7 +22,7 @@ CRUD app/
    cd backend
    npm install
    ```
-2. Initialize the SQLite database (creates `database/app.db`, runs schema + seeds):
+2. (SQLite local) Initialize the local DB (creates `database/app.db`, runs schema + seeds):
    ```bash
    npm run init-db
    ```
@@ -56,8 +56,9 @@ All requests/response bodies are JSON encoded. Passwords must be at least six ch
 
 ## Environment variables
 
-- `PORT` (optional): override default server port (`5000`).
-- `DB_FILE` (optional): absolute path to a SQLite database file. Defaults to `database/app.db`.
+- `MYSQL_URL` (prod): MySQL connection string for Vercel.
+- `DB_FILE` (local optional): SQLite path when `MYSQL_URL` is not set. Defaults to `database/app.db`.
+- `PORT` (optional local): override default server port (`5000`).
 
 ## Development tips
 
