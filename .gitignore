@@ -4,3 +4,4 @@ backend/node_modules/
 npm-debug.log*
 *.log
 database/app.db
+backend/.env

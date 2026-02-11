@@ -1,2 +1,0 @@
--- Optional bootstrap data.
--- Leave empty so each environment can register fresh accounts via the UI.
