@@ -83,21 +83,29 @@ app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
+
     if (!user)
       return res.status(401).json({ message: "Invalid credentials" });
 
     const match = await bcrypt.compare(password, user.password_hash);
+
     if (!match)
       return res.status(401).json({ message: "Invalid credentials" });
 
     res.json({
-      user: { id: user._id, name: user.name, email: user.email }
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
     });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 });
+
 
 /* ===========================
    TASK ROUTES
