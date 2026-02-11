@@ -40,8 +40,9 @@ const taskSchema = new mongoose.Schema({
   completed: { type: Boolean, default: false },
 }, { timestamps: true });
 
-const User = mongoose.model("User", userSchema);
-const Task = mongoose.model("Task", taskSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+const Task = mongoose.models.Task || mongoose.model("Task", taskSchema);
+
 
 /* ===========================
    AUTH ROUTES
