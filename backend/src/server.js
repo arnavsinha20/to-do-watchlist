@@ -1,28 +1,41 @@
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 const SALT_ROUNDS = 10;
 
 app.use(cors());
 app.use(express.json());
 
 /* ===========================
-   MongoDB Connection
+   MongoDB Connection (Vercel Safe)
 =========================== */
-if (!mongoose.connection.readyState) {
-  mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("MongoDB Connected"))
-    .catch(err => console.error("MongoDB Connection Failed:", err));
+
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
 }
 
+async function connectDB() {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(process.env.MONGO_URI, {
+      bufferCommands: false,
+    }).then((mongoose) => mongoose);
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
+
+connectDB().catch(err => console.error("MongoDB Connection Failed:", err));
 
 /* ===========================
    Schemas
@@ -43,13 +56,14 @@ const taskSchema = new mongoose.Schema({
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 const Task = mongoose.models.Task || mongoose.model("Task", taskSchema);
 
-
 /* ===========================
    AUTH ROUTES
 =========================== */
 
 app.post('/api/auth/register', async (req, res) => {
   try {
+    await connectDB();
+
     const { name, email, password } = req.body;
 
     if (!name || !email || !password)
@@ -75,12 +89,15 @@ app.post('/api/auth/register', async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 app.post('/api/auth/login', async (req, res) => {
   try {
+    await connectDB();
+
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
@@ -107,25 +124,29 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-
 /* ===========================
    TASK ROUTES
 =========================== */
 
 app.get('/api/users/:userId/tasks', async (req, res) => {
   try {
+    await connectDB();
+
     const tasks = await Task.find({ userId: req.params.userId })
       .sort({ createdAt: -1 });
 
     res.json(tasks);
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 app.post('/api/users/:userId/tasks', async (req, res) => {
   try {
+    await connectDB();
+
     const { title } = req.body;
 
     if (!title)
@@ -139,12 +160,15 @@ app.post('/api/users/:userId/tasks', async (req, res) => {
     res.status(201).json(task);
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 app.put('/api/users/:userId/tasks/:taskId', async (req, res) => {
   try {
+    await connectDB();
+
     const updated = await Task.findByIdAndUpdate(
       req.params.taskId,
       req.body,
@@ -157,17 +181,21 @@ app.put('/api/users/:userId/tasks/:taskId', async (req, res) => {
     res.json(updated);
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 app.delete('/api/users/:userId/tasks/:taskId', async (req, res) => {
   try {
+    await connectDB();
+
     await Task.findByIdAndDelete(req.params.taskId);
     res.status(204).send();
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -181,13 +209,4 @@ app.get('*', (_req, res) => {
   res.sendFile(path.resolve(__dirname, '../../frontend/index.html'));
 });
 
-/* ===========================
-   START SERVER
-=========================== */
-
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
-
 module.exports = app;
-
