@@ -26,6 +26,10 @@ async function connectDB() {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
+    if (!process.env.MONGO_URI) {
+      throw new Error("MONGO_URI is not defined");
+    }
+
     cached.promise = mongoose.connect(process.env.MONGO_URI, {
       bufferCommands: false,
     }).then((mongoose) => mongoose);
@@ -35,21 +39,19 @@ async function connectDB() {
   return cached.conn;
 }
 
-connectDB().catch(err => console.error("MongoDB Connection Failed:", err));
-
 /* ===========================
    Schemas
 =========================== */
 
 const userSchema = new mongoose.Schema({
-  name: String,
-  email: { type: String, unique: true },
-  password_hash: String,
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password_hash: { type: String, required: true },
 }, { timestamps: true });
 
 const taskSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  title: String,
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  title: { type: String, required: true },
   completed: { type: Boolean, default: false },
 }, { timestamps: true });
 
@@ -89,8 +91,8 @@ app.post('/api/auth/register', async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    console.error("REGISTER ERROR:", error);
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -99,6 +101,9 @@ app.post('/api/auth/login', async (req, res) => {
     await connectDB();
 
     const { email, password } = req.body;
+
+    if (!email || !password)
+      return res.status(400).json({ message: "Email and password required" });
 
     const user = await User.findOne({ email });
 
@@ -119,8 +124,8 @@ app.post('/api/auth/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    console.error("LOGIN ERROR:", error);
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -138,8 +143,8 @@ app.get('/api/users/:userId/tasks', async (req, res) => {
     res.json(tasks);
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    console.error("GET TASKS ERROR:", error);
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -160,8 +165,8 @@ app.post('/api/users/:userId/tasks', async (req, res) => {
     res.status(201).json(task);
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    console.error("CREATE TASK ERROR:", error);
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -181,8 +186,8 @@ app.put('/api/users/:userId/tasks/:taskId', async (req, res) => {
     res.json(updated);
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    console.error("UPDATE TASK ERROR:", error);
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -194,8 +199,8 @@ app.delete('/api/users/:userId/tasks/:taskId', async (req, res) => {
     res.status(204).send();
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    console.error("DELETE TASK ERROR:", error);
+    res.status(500).json({ message: error.message });
   }
 });
 
