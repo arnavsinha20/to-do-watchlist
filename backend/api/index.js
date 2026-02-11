@@ -1,3 +1,211 @@
-const app = require('../src/server');
+const path = require('path');
+const express = require('express');
+const cors = require('cors');
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+require('dotenv').config();
+
+const app = express();
+const SALT_ROUNDS = 10;
+
+app.use(cors());
+app.use(express.json());
+
+/* ===========================
+   MongoDB Connection (Serverless Safe)
+=========================== */
+
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function connectDB() {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    if (!process.env.MONGO_URI) {
+      throw new Error("MONGO_URI is not defined");
+    }
+
+    cached.promise = mongoose.connect(process.env.MONGO_URI, {
+      bufferCommands: false,
+    }).then((mongoose) => mongoose);
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
+
+/* ===========================
+   Schemas
+=========================== */
+
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password_hash: { type: String, required: true },
+}, { timestamps: true });
+
+const taskSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  title: { type: String, required: true },
+  completed: { type: Boolean, default: false },
+}, { timestamps: true });
+
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+const Task = mongoose.models.Task || mongoose.model("Task", taskSchema);
+
+/* ===========================
+   AUTH ROUTES
+=========================== */
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    await connectDB();
+
+    let { name, email, password } = req.body;
+
+    if (!name || !email || !password)
+      return res.status(400).json({ message: "All fields required" });
+
+    if (password.length < 6)
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+
+    email = email.toLowerCase().trim();
+
+    const existing = await User.findOne({ email });
+    if (existing)
+      return res.status(409).json({ message: "Email already registered" });
+
+    const hash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const user = await User.create({
+      name,
+      email,
+      password_hash: hash
+    });
+
+    res.status(201).json({
+      user: { id: user._id, name: user.name, email: user.email }
+    });
+
+  } catch (error) {
+    console.error("REGISTER ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    await connectDB();
+
+    let { email, password } = req.body;
+
+    if (!email || !password)
+      return res.status(400).json({ message: "Email and password required" });
+
+    email = email.toLowerCase().trim();
+
+    const user = await User.findOne({ email });
+
+    if (!user)
+      return res.status(401).json({ message: "Invalid credentials" });
+
+    const match = await bcrypt.compare(password, user.password_hash);
+
+    if (!match)
+      return res.status(401).json({ message: "Invalid credentials" });
+
+    res.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/* ===========================
+   TASK ROUTES
+=========================== */
+
+app.get('/api/users/:userId/tasks', async (req, res) => {
+  try {
+    await connectDB();
+
+    const tasks = await Task.find({ userId: req.params.userId })
+      .sort({ createdAt: -1 });
+
+    res.json(tasks);
+
+  } catch (error) {
+    console.error("GET TASKS ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post('/api/users/:userId/tasks', async (req, res) => {
+  try {
+    await connectDB();
+
+    const { title } = req.body;
+
+    if (!title)
+      return res.status(400).json({ message: "Task title required" });
+
+    const task = await Task.create({
+      userId: req.params.userId,
+      title
+    });
+
+    res.status(201).json(task);
+
+  } catch (error) {
+    console.error("CREATE TASK ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.put('/api/users/:userId/tasks/:taskId', async (req, res) => {
+  try {
+    await connectDB();
+
+    const updated = await Task.findByIdAndUpdate(
+      req.params.taskId,
+      req.body,
+      { new: true }
+    );
+
+    if (!updated)
+      return res.status(404).json({ message: "Task not found" });
+
+    res.json(updated);
+
+  } catch (error) {
+    console.error("UPDATE TASK ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.delete('/api/users/:userId/tasks/:taskId', async (req, res) => {
+  try {
+    await connectDB();
+
+    await Task.findByIdAndDelete(req.params.taskId);
+    res.status(204).send();
+
+  } catch (error) {
+    console.error("DELETE TASK ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 module.exports = app;
