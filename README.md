@@ -1,67 +1,178 @@
-# CRUD App
+# 🚀 To-Do Watchlist (Full Stack - MongoDB + Vercel)
 
-Personal task manager with email/password accounts. The backend is a Node.js + Express API that can run on MySQL in production (Vercel) and falls back to SQLite locally. The frontend is a lightweight dashboard written with vanilla HTML, CSS, and JavaScript.
+A full-stack task manager application with email/password authentication.
 
-## Project layout
+- Frontend: Vanilla HTML, CSS, JavaScript  
+- Backend: Node.js + Express (Serverless on Vercel)  
+- Database: MongoDB Atlas (Cloud)  
+- Deployment: Vercel  
 
-```
-CRUD app/
-├── backend/        # Express server + database helpers
-├── database/       # SQL schema + seed data
-└── frontend/       # Static HTML/CSS/JS client
-```
+---
 
-## Prerequisites
+## 🏗️ Architecture
 
-- Node.js 18+
+Frontend (Static - Vercel)
+        ↓
+Express API (Serverless - Vercel)
+        ↓
+MongoDB Atlas (Cloud Database)
 
-## Getting started
+---
 
-1. Install dependencies:
-   ```bash
-   cd backend
-   npm install
-   ```
-2. (SQLite local) Initialize the local DB (creates `database/app.db`, runs schema + seeds):
-   ```bash
-   npm run init-db
-   ```
-3. Start the server (serves the API on `http://localhost:5000` and the frontend from `/frontend`):
-   ```bash
-   npm start
-   ```
-4. Open the app in the browser: `http://localhost:5000`
+## 📁 Project Structure
 
-## API overview
+to-do-watchlist/
+├── backend/
+│   ├── api/
+│   │   └── index.js
+│   └── src/
+│       └── server.js
+├── frontend/
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+├── vercel.json
+└── README.md
 
-All endpoints are prefixed with `/api`.
+---
 
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| POST | `/api/auth/register` | Create a new account (`name`, `email`, `password`) |
-| POST | `/api/auth/login` | Exchange email/password for a session payload |
-| GET | `/api/users/:userId/tasks` | List tasks that belong to the user |
-| POST | `/api/users/:userId/tasks` | Create a task (`title`) for the user |
-| PUT | `/api/users/:userId/tasks/:taskId` | Update task title or completion flag |
-| DELETE | `/api/users/:userId/tasks/:taskId` | Remove a task |
+## 🛠️ Tech Stack
 
-All requests/response bodies are JSON encoded. Passwords must be at least six characters; hashes are stored with `bcryptjs`.
+- Node.js
+- Express
+- MongoDB Atlas
+- Mongoose
+- bcryptjs
+- Vercel
 
-## Usage flow
+---
 
-1. Visit `http://localhost:5000` once the server is running.
-2. Use the **Register** tab to create an account (name, email, password).
-3. Log in with the same credentials; the UI switches to your personal task board.
-4. Add, complete, edit, or delete tasks. Every action is scoped to the logged-in user identifier.
+## ⚙️ Local Development
 
-## Environment variables
+### 1️⃣ Install dependencies
 
-- `MYSQL_URL` (prod): MySQL connection string for Vercel.
-- `DB_FILE` (local optional): SQLite path when `MYSQL_URL` is not set. Defaults to `database/app.db`.
-- `PORT` (optional local): override default server port (`5000`).
+cd backend  
+npm install  
 
-## Development tips
+---
 
-- Use `npm run dev` in `backend/` for automatic reloads via `nodemon`.
-- `database/schema.sql` contains the full DDL; tweak it to add more tables or columns.
-- `database/seed.sql` is run once per `npm run init-db`; adjust or clear it when reseeding.
+### 2️⃣ Create .env file inside backend/
+
+MONGO_URI=your_mongodb_connection_string  
+PORT=5000  
+
+Example:
+
+MONGO_URI=mongodb+srv://username:password@cluster0.mongodb.net/todoDB  
+PORT=5000  
+
+⚠️ Never commit .env to GitHub.
+
+---
+
+### 3️⃣ Run project
+
+npm run dev  
+
+Open in browser:
+
+http://localhost:5000  
+
+---
+
+## 🔐 Authentication
+
+- Users register with name, email, password  
+- Passwords are hashed using bcryptjs  
+- Passwords are never stored in plain text  
+
+---
+
+## 🗄️ Database (MongoDB Atlas)
+
+Database: todoDB  
+
+Collections:
+
+- users  
+- tasks  
+
+Example user document:
+
+{
+  "_id": "...",
+  "name": "Arnav",
+  "email": "arnav@gmail.com",
+  "password_hash": "$2a$10$..."
+}
+
+---
+
+## 🔌 API Endpoints
+
+All endpoints are prefixed with /api
+
+POST   /api/auth/register  
+POST   /api/auth/login  
+GET    /api/users/:userId/tasks  
+POST   /api/users/:userId/tasks  
+PUT    /api/users/:userId/tasks/:taskId  
+DELETE /api/users/:userId/tasks/:taskId  
+
+All requests and responses use JSON.
+
+---
+
+## 🚀 Deployment (Vercel)
+
+1️⃣ Push to GitHub  
+
+git add .  
+git commit -m "Deploy setup"  
+git push  
+
+2️⃣ Import to Vercel  
+
+- Go to https://vercel.com  
+- Add New Project  
+- Import your repository  
+
+3️⃣ Add Environment Variable in Vercel  
+
+Project → Settings → Environment Variables  
+
+Add:
+
+MONGO_URI = your_mongodb_connection_string  
+
+4️⃣ Deploy  
+
+Vercel will:
+- Deploy backend as serverless function  
+- Serve frontend statically  
+- Connect to MongoDB Atlas  
+
+---
+
+## 🔒 Security
+
+- Passwords hashed using bcrypt  
+- No hardcoded secrets  
+- Database credentials stored in environment variables  
+- .env ignored via .gitignore  
+
+---
+
+## 📌 Future Improvements
+
+- Add JWT authentication  
+- Add protected routes  
+- Add task categories  
+- Add pagination  
+- Add user profile page  
+
+---
+
+## 📄 License
+
+MIT License
